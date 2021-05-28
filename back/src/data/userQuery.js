@@ -1,0 +1,1 @@
+exports.join = 'insert into user values ?'
