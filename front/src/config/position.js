@@ -4,6 +4,7 @@ let img_x = null
 let img_y = null
 let x = null
 let y = null
+let w = null
 let h = null
 
 const setProfilePosition = () => {
@@ -38,9 +39,10 @@ const setProfilePosition = () => {
     if(x < 0 ) x = 0
     if(y < 0 ) y = 0
     
+    w = parseFloat(document.querySelector(".profile img").getBoundingClientRect().width.toFixed(2))
     h = parseFloat(document.querySelector(".profile img").getBoundingClientRect().height.toFixed(2))
 
-    return [x,y,h]
+    return [x,y,h,w]
 }
 
 const setFeedPosition = (i) => {
@@ -75,9 +77,10 @@ const setFeedPosition = (i) => {
     if(x < 0 ) x = 0
     if(y < 0 ) y = 0
     
+    w = parseFloat(document.querySelectorAll(".feedImg")[i].getBoundingClientRect().width.toFixed(2))
     h = parseFloat(document.querySelectorAll(".feedImg")[i].getBoundingClientRect().height.toFixed(2))
 
-    return [x,y,h]
+    return [x,y,h,w]
 
 }
 

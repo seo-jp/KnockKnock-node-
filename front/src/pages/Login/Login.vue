@@ -22,6 +22,8 @@
             required
             />
 
+             <span class="error text-center">{{ setErr }}</span>
+
             <Button text="로그인" />
 
             <b-form-checkbox
@@ -57,14 +59,25 @@ export default {
           password: '',
           checked: '',
         },
+        setErr: null,
       }
     },
     methods: {
-      onSubmit(event) {
-        event.preventDefault()
+      async onSubmit(e) {
+        e.preventDefault()
+        await this.$axios.post('/api/user/login',
+          {"userInfo": this.form}
+        ).then((res)=>{
+          if(res.data.success == false)
+            this.setErr = res.data.msg
+          else
+            this.setErr = null
+        }).catch(error=>{
+          throw new Error(error)
+        })
       },
-      onReset(event) {
-        event.preventDefault()
+      onReset(e) {
+        e.preventDefault()
         this.form.email = ''
         this.form.name = ''
         this.form.checked = ''

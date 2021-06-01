@@ -34,6 +34,7 @@
               :max-scale="10"
               :zooming-elastic="false"
               :zoomed.sync="zoomed"
+              pivot='image-center'
               >
               <img :src="tempUrl" class="profile-img">
               </v-zoomer>
@@ -87,6 +88,8 @@ export default {
         tempStyle : null, // 임시정보
         tempUrl : null, // 임시정보
 
+        file : null,
+
         error : null // 에러메세지
       }
     },
@@ -100,13 +103,15 @@ export default {
       // 확인 클릭 시 임시정보에 확인한 스타일 저장 후 selectedImage = false로 옵션변경
       // 확인 클릭 시 zoomer reset해주기 (안그러면 다음작업시 전 스케일정보 남아있음)
       getStyle() {
-        this.tempStyle = "object-fit: contain; width: 100%; height: 100%; transform:" 
+        this.tempStyle = "object-fit: contain; height: 100%; transform:" 
                         + document.querySelector(".zoomer").style.transform
         this.selectedImage = !this.selectedImage
 
         this.oldTempUrl = this.tempUrl
         this.oldTempStyle = this.tempStyle
-
+        
+        this.form.file = this.file
+        
         this.$refs.zoomer.reset()
       },
       // 이미지 등록버튼 클릭 시 파일선택기능
@@ -122,7 +127,7 @@ export default {
         if(file != null && file != ''){
           this.selectedImage = !this.selectedImage
           this.tempUrl = URL.createObjectURL(file)
-          this.form.file = file
+          this.file = file
         }
       },
       // 취소 시 전 임시정보 불러서 셋팅
@@ -132,18 +137,19 @@ export default {
         this.tempUrl = this.oldTempUrl
         this.tempStyle = this.oldTempStyle
         this.$refs.profileFile.value = null
+        this.file = null
         this.$refs.zoomer.reset()
       },
       // 폼 저장
       onSubmit(e) {
         e.preventDefault()
         //기본프로필이 아닐때만
-        if(this.tempStyle != null) {
-          this.error = checkForm('step1',document.querySelector(".imageInput").value)
+        if(this.form.file != null && this.form.file != '') {
           
+          this.error = checkForm('step1',this.form.file.name)
           this.form.imageStyle = setProfilePosition()
-          
           if(this.error == null) this.$emit('step',2)
+
         } else {
           this.$emit('step',2)
         }
@@ -153,6 +159,9 @@ export default {
       // 어떤 경우든 change가능하게 file value 지워주기
       onReset() {
         this.$refs.profileFile.value = null
+        this.form.file = null
+        this.form.imageStyle = null
+
         this.tempStyle = null
         this.tempUrl = this.basicUrl
 
@@ -161,6 +170,8 @@ export default {
         
         this.zoomed = false
         this.selectedImage = false
+
+        this.error = null
       }
     }
 }

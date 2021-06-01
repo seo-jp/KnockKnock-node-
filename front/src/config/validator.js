@@ -54,7 +54,7 @@ const checkForm = (type,val) => {
             break
 
         case 'step3' :
-
+            
             for(var j in val){
                 if(val[j] != null && val[j] != '' && imgChk.test(val[j]) == false)
                 return "이미지파일만 등록 가능합니다"

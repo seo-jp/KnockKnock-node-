@@ -50,16 +50,16 @@ export default {
       setStep(i){
         this.step = i
       },
-      join() {
+      async join() {
         //single file
         if(this.profile.file!= null && this.profile.file != undefined){
           const formData = new FormData()
           formData.append('profile', this.profile.file)
           formData.append('style', this.profile.imageStyle)
-          this.$axios.post('/api/common/fileUpload', formData, {
+          await this.$axios.post('/api/common/fileUpload', formData, {
             header: { 'content-type': 'multipart/form-data' },
           }).then((response) => {
-            console.log({ response })
+            this.profile.fileName = response.data.fileName
           }).catch(error=>{
             console.log(error)
             throw new Error(error)
@@ -70,20 +70,24 @@ export default {
 
         //multi file
         const formData2 = new FormData()
-        let kwdChk = false
+        let kwdChk = []
         for (var i in this.kwd) {
           if(this.kwd[i].file != null && this.kwd[i].file != undefined){
+            formData2.append('ids', this.kwd[i].id)
             formData2.append('feeds', this.kwd[i].file)
             formData2.append('styles[]', this.kwd[i].imageStyle)
-            kwdChk = true
+            kwdChk.push(this.kwd[i].id) //키워드이미지 있는경우
           }
         }
 
-        if(kwdChk == true){
-          this.$axios.post('/api/common/fileUploads', formData2, {
+        if(kwdChk.length > 0){
+          await this.$axios.post('/api/common/fileUploads', formData2, {
             header: { 'content-type': 'multipart/form-data' },
           }).then((response) => {
-            console.log({ response })
+            for(var j in response.data){
+              const rs = response.data.find(file => file.id == kwdChk[j])
+              this.kwd[Number(kwdChk[j]-1)].fileName = rs.fileName
+            }
           }).catch(error=>{
             console.log(error)
             throw new Error(error)
@@ -94,22 +98,22 @@ export default {
 
         //user Info
 
-        // this.$axios.post('/api/user/join',
-        //   {
-        //     "basic": this.basic,
-        //     "profile": this.profile,
-        //     "keyList": this.kwd
-        //   }
-        // ).then((res)=>{
-        //   console.log(res);
-        // }).catch(error=>{
-        //   console.log(error);
-        //   throw new Error(error);
-        // })
+        await this.$axios.post('/api/user/join',
+          {
+            "basic": this.basic,
+            "profile": this.profile,
+            "keyList": this.kwd
+          }
+        ).then((response)=>{
+          console.log(response)
+        }).catch(error=>{
+          console.log(error)
+          throw new Error(error)
+        })
       }
     },
     created() {
-      this.step = 1
+      this.step = 0
       this.basic = {
         name: null,
         userId: null,

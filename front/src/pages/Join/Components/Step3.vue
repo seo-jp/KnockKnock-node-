@@ -96,6 +96,7 @@ export default {
     data() {
       return {
         basicUrl : require('../../../assets/img/basicFeed.png'), //기본 피드사진
+        files: [null, null, null, null],
         error : null // 에러메세지
       }
     },
@@ -114,6 +115,7 @@ export default {
         this.lists[i].oldTempUrl = this.lists[i].tempUrl
         this.lists[i].oldTempStyle = this.lists[i].tempStyle
 
+        this.lists[i].file = this.files[i]
         this.$refs.zoomer[i].reset()
       },
       onClickImageUpload(i) {
@@ -126,7 +128,7 @@ export default {
         if(file != null && file != ''){
           this.lists[i].selectedImage = !this.lists[i].selectedImage
           this.lists[i].tempUrl = URL.createObjectURL(file)
-          this.lists[i].file = file
+          this.files[i] = file
         }
       },
       onCancel(i) {
@@ -140,17 +142,27 @@ export default {
         e.preventDefault()
 
         let imgs = []
+        
+        for(var j in this.lists)
+          if(this.lists[j].file != null && this.lists[j].file != '')
+            imgs.push(this.lists[j].file.name)
+        
         this.error = checkForm('step3',imgs)
         
-        for(var j in this.lists){
-          if(this.lists[j].tempStyle != null) {
-            this.lists[j].imageStyle = setFeedPosition(j)
-          }
-        }
-        if(this.error == null) this.$emit('join')
+        if(this.error == null){
+          for(var k in this.lists)
+            if(this.lists[k].tempStyle != null) 
+              this.lists[k].imageStyle = setFeedPosition(k)
+
+          this.$emit('join')
+        } 
       },
       onReset(i) {
-        this.$refs.feedFile[i].value=null;
+        this.$refs.feedFile[i].value=null
+        this.files[i] = null
+
+        this.lists[i].file = null
+        this.lists[i].imageStyle = null
        
         this.lists[i].tempStyle = null
         this.lists[i].tempUrl = this.basicUrl

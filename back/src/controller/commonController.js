@@ -1,12 +1,17 @@
-const commonService = require('../service/commonService')
 const multer  = require('multer')
 var Jimp = require('jimp');
 const fs = require('fs')
 
+const pool = require('../data/pool')
+const commonQuery = require('../data/commonQuery')
+
+
+// keyword & category 검색,보기 ----------------------------------------------------------------------------------------
+
 exports.getCategory = async (req, res, next) => {
     try {
-        let rows = await commonService.getCategory()
-        return res.json(rows)
+        let data = await pool.query(commonQuery.getCategory)
+        return res.json(data[0])
     } catch (err) {
         return res.status(500).json(err)
     }
@@ -15,8 +20,8 @@ exports.getCategory = async (req, res, next) => {
 exports.getCategoryByName = async (req, res, next) => {
     let ctgCategory  = '%' + req.params.ctgCategory + '%'
     try {
-        let rows = await commonService.getCategoryByName(ctgCategory)
-        return res.json(rows)
+        let data = await pool.query(commonQuery.getCategoryByName, [ctgCategory])
+        return res.json(data[0])
     } catch (err) {
         return res.status(500).json(err)
     }
@@ -24,8 +29,8 @@ exports.getCategoryByName = async (req, res, next) => {
 
 exports.getKeyword = async (req, res, next) => {
     try {
-        let rows = await commonService.getKeyword()
-        return res.json(rows)
+        let data = await pool.query(commonQuery.getKeyword)
+        return res.json(data[0])
     } catch (err) {
         return res.status(500).json(err)
     }
@@ -34,20 +39,20 @@ exports.getKeyword = async (req, res, next) => {
 exports.getKeywordByName = async (req, res, next) => {
     let keyword  = '%' + req.params.keyword + '%'
     try {
-        let rows = await commonService.getKeywordByName(keyword)
-        return res.json(rows)
+        let data = await pool.query(commonQuery.getKeywordByName, [keyword])
+        return res.json(data[0])
     } catch (err) {
         return res.status(500).json(err)
     }
 }
 
-//validation
+//validation 중복체크 ----------------------------------------------------------------------------------------
 
 exports.dupliIdCheck = async (req, res, next) => {
     let userId  = req.params.userId
     try {
-        let rs = await commonService.dupliIdCheck(userId)
-        return res.json(rs)
+        let data = await pool.query(commonQuery.dupliIdCheck, [userId])
+        return res.json(data[0])
     } catch (err) {
         return res.status(500).json(err)
     }
@@ -56,8 +61,8 @@ exports.dupliIdCheck = async (req, res, next) => {
 exports.dupliPhoneCheck = async (req, res, next) => {
     let phone  = req.params.phone
     try {
-        let rs = await commonService.dupliPhoneCheck(phone)
-        return res.send(rs)
+        let data = await pool.query(commonQuery.dupliPhoneCheck, [phone])
+        return res.json(data[0])
     } catch (err) {
         return res.status(500).json(err)
     }
@@ -66,15 +71,16 @@ exports.dupliPhoneCheck = async (req, res, next) => {
 exports.dupliMailCheck = async (req, res, next) => {
     let mail  = req.params.mail
     try {
-        let rs = await commonService.dupliMailCheck(mail)
-        return res.send(rs)
+        let data = await pool.query(commonQuery.dupliMailCheck, [mail])
+        return res.json(data[0])
     } catch (err) {
         return res.status(500).json(err)
     }
 }
 
 
-// file upload
+// file upload (profile & feed) ----------------------------------------------------------------------------------------
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       cb(null, "img/")
@@ -84,19 +90,25 @@ const storage = multer.diskStorage({
     },
 })
 
-const jimpImages = async(file,styles) => {
-    const fileName = `${Date.now()}_${file.originalname}`
-    const newFileName = `feed_${fileName}`
+// 나중에 jimpImage는 하나로 합치고 width,height만 변수로 설정하기
+const jimpImages = async(file,styles,newFileName) => {
     
     await Jimp.read(file.path)
         .then(image => {
             if(styles[2] == 218){
                 image            
-                .resize(Jimp.AUTO, parseFloat(styles[2]))
+                .resize(parseFloat(styles[3]), parseFloat(styles[2]))
                 .write(`img/${newFileName}`)
-            } else {
+            }
+            else if(styles[2] > 218 && styles[3] < 318){
                 image            
-                .resize(Jimp.AUTO, parseFloat(styles[2]))
+                .resize(parseFloat(styles[3]), parseFloat(styles[2]))
+                .crop(0, parseFloat(styles[0]), parseFloat(styles[3]), 218)
+                .write(`img/${newFileName}`)
+            }
+            else {
+                image            
+                .resize(parseFloat(styles[3]), parseFloat(styles[2]))
                 .crop(parseFloat(styles[1]), parseFloat(styles[0]) , 318, 218)
                 .write(`img/${newFileName}`)
             }
@@ -104,22 +116,29 @@ const jimpImages = async(file,styles) => {
             fs.unlink(file.path, (err)=>{	
                 if(err) throw err				            
             })
+
+            return newFileName
         })
 }
 
-const jimpImage = async(file,styles) => {
-    const fileName = `${Date.now()}_${file.originalname}`
-    const newFileName = `profile_${fileName}`
+const jimpImage = async(file,styles,newFileName) => {
     
     await Jimp.read(file.path)
         .then(image => {
             if(styles[2] == 198){
                 image            
-                .resize(Jimp.AUTO, parseFloat(styles[2]))
+                .resize(parseFloat(styles[3]), parseFloat(styles[2]))
                 .write(`img/${newFileName}`)
-            } else {
+            }
+            else if(styles[2] > 198 && styles[3] < 198){
                 image            
-                .resize(Jimp.AUTO, parseFloat(styles[2]))
+                .resize(parseFloat(styles[3]), parseFloat(styles[2]))
+                .crop(0, parseFloat(styles[0]), parseFloat(styles[3]), 198)
+                .write(`img/${newFileName}`)
+            }
+            else {
+                image            
+                .resize(parseFloat(styles[3]), parseFloat(styles[2]))
                 .crop(parseFloat(styles[1]), parseFloat(styles[0]) , 198, 198)
                 .write(`img/${newFileName}`)
             }
@@ -139,9 +158,15 @@ exports.fileUpload = async (req, res, next) => {
         upload(req, res, (err) => {
             
             if (err) return res.json({ success: false, err })
+
+            const fileName = `${Date.now()}_${req.file.originalname}`
+            const newFileName = `profile_${fileName}`
             const styles = req.body.style.split(',')
-            jimpImage(req.file,styles)
+
+            jimpImage(req.file,styles,newFileName)
             
+            console.log(newFileName)
+            return res.json({fileName : newFileName})
         })
     } catch (err) {
         return res.status(500).json(err)
@@ -153,11 +178,19 @@ exports.fileUploads = async (req, res, next) => {
         uploads(req, res, (err) => {
             if (err) return res.json({ success: false, err })
             let styles = []
+            let fileName = []
+            let fileNames = []
 
             for(var i in req.files){
+                fileName[i] = `feed_${Date.now()}_${req.files[i].originalname}`
                 styles[i] = req.body.styles[i].split(',')
-                jimpImages(req.files[i],styles[i])
+                jimpImages(req.files[i],styles[i],fileName[i])
+
+                fileNames[i] = {id : req.body.ids[i] , fileName : fileName[i]}
+                console.log(fileNames[i])
             }
+
+            return res.json(fileNames)
         })
     } catch (err) {
         return res.status(500).json(err)
