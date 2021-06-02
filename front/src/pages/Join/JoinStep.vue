@@ -51,6 +51,7 @@ export default {
         this.step = i
       },
       async join() {
+
         //single file
         if(this.profile.file!= null && this.profile.file != undefined){
           const formData = new FormData()
@@ -97,7 +98,6 @@ export default {
         }
 
         //user Info
-
         await this.$axios.post('/api/user/join',
           {
             "basic": this.basic,

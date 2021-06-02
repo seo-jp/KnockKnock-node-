@@ -4,6 +4,7 @@ import router from './config/router'
 import axios from 'axios'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import VueZoomer from './shared-components/zoom/index'
+import VueCookie from 'vue-cookie'
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
 import 'bootstrap/dist/css/bootstrap.css'
@@ -15,6 +16,8 @@ Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
 // Zoomer
 Vue.use(VueZoomer)
+// Cookie
+Vue.use(VueCookie)
 
 Vue.prototype.$axios = axios
 Vue.config.productionTip = false

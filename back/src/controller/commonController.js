@@ -165,7 +165,6 @@ exports.fileUpload = async (req, res, next) => {
 
             jimpImage(req.file,styles,newFileName)
             
-            console.log(newFileName)
             return res.json({fileName : newFileName})
         })
     } catch (err) {
@@ -187,7 +186,6 @@ exports.fileUploads = async (req, res, next) => {
                 jimpImages(req.files[i],styles[i],fileName[i])
 
                 fileNames[i] = {id : req.body.ids[i] , fileName : fileName[i]}
-                console.log(fileNames[i])
             }
 
             return res.json(fileNames)

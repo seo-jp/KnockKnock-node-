@@ -27,7 +27,7 @@
             <Button text="로그인" />
 
             <b-form-checkbox
-            v-model="form.checked"
+            v-model="rememberId"
             class="mb-2 mr-sm-2 mb-sm-0 chk-box float-left">
             아이디 저장
             </b-form-checkbox>
@@ -56,13 +56,24 @@ export default {
       return {
         form: {
           userId: '',
-          password: '',
-          checked: '',
+          password: ''
         },
+        rememberId: '',
         setErr: null,
       }
     },
+    created() {
+      this.getCookieId()
+    },
     methods: {
+      // rememberId
+      getCookieId() {
+        if(this.$cookie.get('userId') !== null && this.$cookie.get('userId') !== undefined){
+          this.form.userId = this.$cookie.get('userId')
+          this.rememberId = true
+        }
+      },
+      // login
       async onSubmit(e) {
         e.preventDefault()
         await this.$axios.post('/api/user/login',
@@ -70,8 +81,13 @@ export default {
         ).then((res)=>{
           if(res.data.success == false)
             this.setErr = res.data.msg
-          else
+          else{
             this.setErr = null
+            if(this.rememberId == true)
+              this.$cookie.set('userId', this.form.userId, 10000)
+            else if(this.rememberId == false && this.$cookie.get('userId') !== null && this.$cookie.get('userId') !== undefined)
+              this.$cookie.delete('userId')
+          }
         }).catch(error=>{
           throw new Error(error)
         })
@@ -80,7 +96,7 @@ export default {
         e.preventDefault()
         this.form.email = ''
         this.form.name = ''
-        this.form.checked = ''
+        this.form.rememberId = ''
       }
     }
 }
